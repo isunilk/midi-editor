@@ -11,13 +11,12 @@ import {
   useToggleGhostTrack,
 } from "../../actions"
 import { useContextMenu } from "../../hooks/useContextMenu"
-import { useInstrumentBrowser } from "../../hooks/useInstrumentBrowser"
 import { usePianoRoll } from "../../hooks/usePianoRoll"
 import { useRouter } from "../../hooks/useRouter"
 import { useTrack } from "../../hooks/useTrack"
 import { useTrackMute } from "../../hooks/useTrackMute"
-import { categoryEmojis, getCategoryIndex } from "../../midi/GM"
-import { InstrumentName } from "./InstrumentName"
+import { InstrumentBrowser } from "../InstrumentBrowser/InstrumentBrowser"
+import { InstrumentEmoji, InstrumentName } from "./InstrumentName"
 import { TrackDialog } from "./TrackDialog"
 import { TrackListContextMenu } from "./TrackListContextMenu"
 import { TrackName } from "./TrackName"
@@ -161,7 +160,6 @@ export const TrackListItem: FC<TrackListItemProps> = ({ trackId }) => {
     isSolo,
   } = useTrack(trackId)
   const { setPath } = useRouter()
-  const { setSetting, setOpen } = useInstrumentBrowser()
   const { toggleMute: toggleMuteTrack, toggleSolo: toggleSoloTrack } =
     useTrackMute()
   const toggleGhostTrack = useToggleGhostTrack()
@@ -172,17 +170,14 @@ export const TrackListItem: FC<TrackListItemProps> = ({ trackId }) => {
   const ghostTrack = !notGhostTrackIds.has(trackId)
   const { onContextMenu, menuProps } = useContextMenu()
   const [isDialogOpened, setDialogOpened] = useState(false)
+  const [isInstrumentBrowserOpen, setInstrumentBrowserOpen] = useState(false)
 
   const onDoubleClickIcon = useCallback(() => {
     if (isConductorTrack) {
       return
     }
-    setOpen(true)
-    setSetting({
-      programNumber,
-      isRhythmTrack,
-    })
-  }, [setSetting, programNumber, isRhythmTrack, setOpen, isConductorTrack])
+    setInstrumentBrowserOpen(true)
+  }, [isConductorTrack])
 
   const onClickMute: MouseEventHandler = useCallback(
     (e) => {
@@ -221,10 +216,6 @@ export const TrackListItem: FC<TrackListItemProps> = ({ trackId }) => {
     setDialogOpened(true)
   }, [])
 
-  const emoji = isRhythmTrack
-    ? "🥁"
-    : categoryEmojis[getCategoryIndex(programNumber ?? 0)]
-
   const color =
     trackColor !== undefined ? trackColorToCSSColor(trackColor) : "transparent"
 
@@ -243,7 +234,12 @@ export const TrackListItem: FC<TrackListItemProps> = ({ trackId }) => {
           }}
           onDoubleClick={onDoubleClickIcon}
         >
-          <IconInner data-selected={selected}>{emoji}</IconInner>
+          <IconInner data-selected={selected}>
+            <InstrumentEmoji
+              isRhythmTrack={isRhythmTrack}
+              programNumber={programNumber ?? 0}
+            />
+          </IconInner>
         </Icon>
         <div>
           <Label>
@@ -292,6 +288,12 @@ export const TrackListItem: FC<TrackListItemProps> = ({ trackId }) => {
         trackId={trackId}
         open={isDialogOpened}
         onClose={() => setDialogOpened(false)}
+      />
+      <InstrumentBrowser
+        isOpen={isInstrumentBrowserOpen}
+        onOpenChange={setInstrumentBrowserOpen}
+        trackId={trackId}
+        showInsertButton={true}
       />
     </>
   )
