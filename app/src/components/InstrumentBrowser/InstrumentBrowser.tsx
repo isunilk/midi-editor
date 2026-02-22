@@ -75,7 +75,7 @@ export const InstrumentBrowser: FC<InstrumentBrowserProps> = ({
     changeInstrument,
     onClickOK,
     changeRhythmTrack,
-  } = useInstrumentBrowser(setting)
+  } = useInstrumentBrowser(setting, targetEventId)
 
   const targetEvent = useMemo(() => {
     if (targetEventId !== undefined) {

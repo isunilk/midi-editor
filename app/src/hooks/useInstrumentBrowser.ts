@@ -11,11 +11,17 @@ import { usePreviewNote } from "./usePreviewNote"
 import { useSong } from "./useSong"
 import { useTrack } from "./useTrack"
 
-export function useInstrumentBrowser(setting: InstrumentSetting) {
+export function useInstrumentBrowser(
+  setting: InstrumentSetting,
+  targetEventId?: number,
+) {
   const { selectedTrackId } = usePianoRoll()
   const { isRhythmTrack, channel, setChannel } = useTrack(selectedTrackId)
   const { isPlaying, sendEvent } = usePlayer()
-  const setTrackInstrumentAction = useSetTrackInstrument(selectedTrackId)
+  const setTrackInstrumentAction = useSetTrackInstrument(
+    selectedTrackId,
+    targetEventId,
+  )
   const insertTrackInstrumentAction = useInsertTrackInstrument(selectedTrackId)
   const { tracks } = useSong()
   const { previewNoteOn } = usePreviewNote()
