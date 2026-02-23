@@ -1,10 +1,10 @@
 import styled from "@emotion/styled"
+import BluetoothIcon from "mdi-react/BluetoothIcon"
 import { FC } from "react"
 import { Device, useMIDIDevice } from "../../../hooks/useMIDIDevice"
 import { Localized } from "../../../localize/useLocalization"
 import { DialogContent, DialogTitle } from "../../Dialog/Dialog"
 import { Alert } from "../../ui/Alert"
-import { Button } from "../../ui/Button"
 import { Checkbox } from "../../ui/Checkbox"
 import { CircularProgress } from "../../ui/CircularProgress"
 import { Label } from "../../ui/Label"
@@ -45,12 +45,41 @@ const Notice = styled.div`
   color: var(--color-text-secondary);
 `
 
-const Spacer = styled.div`
-  height: 2rem;
-`
-
 const SectionTitle = styled.div`
   font-weight: bold;
+  margin: 2rem 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`
+
+const IconButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    background: var(--color-highlight);
+    color: var(--color-text);
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+`
+
+const Divider = styled.div`
+  height: 1px;
+  background: var(--color-divider);
   margin: 1rem 0;
 `
 
@@ -75,22 +104,19 @@ export const MIDIDeviceView: FC = () => {
       <DialogContent>
         {isLoading && <CircularProgress />}
         {requestError && (
-          <>
-            <Alert severity="warning">{requestError.message}</Alert>
-            <Spacer />
-          </>
+          <Alert severity="warning">{requestError.message}</Alert>
         )}
         {!isLoading && (
           <>
             <SectionTitle>
               <Localized name="inputs" />
+              <IconButton
+                onClick={requestBluetoothMIDIDevice}
+                title="Connect Bluetooth MIDI Device"
+              >
+                <BluetoothIcon />
+              </IconButton>
             </SectionTitle>
-            <Button
-              onClick={requestBluetoothMIDIDevice}
-              style={{ marginBottom: 8 }}
-            >
-              Connect Bluetooth MIDI Device
-            </Button>
             <DeviceList>
               {inputDevices.length === 0 && (
                 <Notice>
@@ -126,23 +152,19 @@ export const MIDIDeviceView: FC = () => {
               isSelected={midiInputRouting === "channelRouting"}
               onClick={() => setMidiInputRouting("channelRouting")}
             />
-            {
-              <>
-                <Spacer />
-                <SectionTitle>
-                  <Localized name="outputs" />
-                </SectionTitle>
-                <DeviceList>
-                  {outputDevices.map((device) => (
-                    <DeviceRow
-                      key={device.id}
-                      device={device}
-                      onCheck={(checked) => setOutputEnable(device.id, checked)}
-                    />
-                  ))}
-                </DeviceList>
-              </>
-            }
+            <Divider />
+            <SectionTitle>
+              <Localized name="outputs" />
+            </SectionTitle>
+            <DeviceList>
+              {outputDevices.map((device) => (
+                <DeviceRow
+                  key={device.id}
+                  device={device}
+                  onCheck={(checked) => setOutputEnable(device.id, checked)}
+                />
+              ))}
+            </DeviceList>
           </>
         )}
       </DialogContent>
