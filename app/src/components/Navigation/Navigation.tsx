@@ -1,6 +1,4 @@
 import styled from "@emotion/styled"
-import Forum from "mdi-react/ForumIcon"
-import Help from "mdi-react/HelpCircleIcon"
 import Settings from "mdi-react/SettingsIcon"
 import { CSSProperties, FC, MouseEvent, useCallback } from "react"
 import { getPlatform, isRunningInElectron } from "../../helpers/platform"
@@ -14,7 +12,6 @@ import { Localized } from "../../localize/useLocalization"
 import { Tooltip } from "../ui/Tooltip"
 import { EditMenuButton } from "./EditMenuButton"
 import { FileMenuButton } from "./FileMenuButton"
-import { UserButton } from "./UserButton"
 
 const Container = styled.div`
   display: flex;
@@ -83,7 +80,7 @@ export const IconStyle: CSSProperties = {
 }
 
 export const Navigation: FC = () => {
-  const { setOpenSettingDialog, setOpenHelpDialog } = useRootView()
+  const { setOpenSettingDialog } = useRootView()
   const { path, setPath } = useRouter()
 
   const onClickPianoRollTab = useCallback(
@@ -116,14 +113,6 @@ export const Navigation: FC = () => {
       setOpenSettingDialog(true)
     },
     [setOpenSettingDialog],
-  )
-
-  const onClickHelp = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault()
-      setOpenHelpDialog(true)
-    },
-    [setOpenHelpDialog],
   )
 
   return (
@@ -191,37 +180,13 @@ export const Navigation: FC = () => {
       <FlexibleSpacer />
 
       {!isRunningInElectron() && (
-        <>
-          <Tab onClick={onClickSettings}>
-            <Settings style={IconStyle} />
-            <TabTitle>
-              <Localized name="settings" />
-            </TabTitle>
-          </Tab>
-
-          <Tab onClick={onClickHelp}>
-            <Help style={IconStyle} />
-            <TabTitle>
-              <Localized name="help" />
-            </TabTitle>
-          </Tab>
-
-          <Tab>
-            <Forum style={IconStyle} />
-            <TabTitle>
-              <a
-                href="https://discord.gg/XQxzNdDJse"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Discord
-              </a>
-            </TabTitle>
-          </Tab>
-        </>
+        <Tab onClick={onClickSettings}>
+          <Settings style={IconStyle} />
+          <TabTitle>
+            <Localized name="settings" />
+          </TabTitle>
+        </Tab>
       )}
-
-      <UserButton />
     </Container>
   )
 }
