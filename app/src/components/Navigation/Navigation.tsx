@@ -13,6 +13,10 @@ import { Tooltip } from "../ui/Tooltip"
 import { EditMenuButton } from "./EditMenuButton"
 import { FileMenuButton } from "./FileMenuButton"
 
+/** Returns true if running inside an iframe (embedded in MusicWave) */
+const isEmbedded =
+  typeof window !== "undefined" && window.parent !== window
+
 const Container = styled.div`
   display: flex;
   flex-direction: row;
@@ -36,7 +40,7 @@ const Container = styled.div`
 export const Tab = styled.div`
   display: flex;
   flex-direction: row;
-  align-items: center; 
+  align-items: center;
   padding: 0.5rem 1rem;
   font-size: 0.75rem;
   border-top: solid 0.1rem transparent;
@@ -179,7 +183,8 @@ export const Navigation: FC = () => {
 
       <FlexibleSpacer />
 
-      {!isRunningInElectron() && (
+      {/* Only show Settings when NOT embedded in MusicWave iframe */}
+      {!isRunningInElectron() && !isEmbedded && (
         <Tab onClick={onClickSettings}>
           <Settings style={IconStyle} />
           <TabTitle>

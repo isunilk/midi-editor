@@ -23,6 +23,11 @@ import { GlobalCSS } from "../Theme/GlobalCSS"
 import { Toast } from "../ui/Toast"
 import { ElectronCallbackHandler } from "./ElectronCallbackHandler"
 import { LocalizationProvider } from "./LocalizationProvider"
+import { PostMessageBridge } from "../PostMessageBridge/PostMessageBridge"
+
+/** Returns true if running inside an iframe (embedded in MusicWave) */
+const isEmbedded =
+  typeof window !== "undefined" && window.parent !== window
 
 const rootStore = new RootStore()
 
@@ -46,6 +51,7 @@ export function App() {
                                 {isRunningInElectron() && (
                                   <ElectronCallbackHandler />
                                 )}
+                                {isEmbedded && <PostMessageBridge />}
                                 <RootView />
                               </TempoEditorProvider>
                             </ArrangeViewProvider>
