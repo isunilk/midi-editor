@@ -8,15 +8,20 @@ import { useSong } from "../../hooks/useSong"
  * (running in an iframe) and the parent MusicWave/MusicGen application.
  *
  * Supported incoming messages (from parent):
- *   { type: "LOAD_MIDI", data: number[] }  – loads a MIDI file into the editor
- *   { type: "REQUEST_MIDI" }               – requests the current song as MIDI
- *   { type: "PING" }                       – health check
+ *   { type: "LOAD_MIDI", data: number[] }               – loads a MIDI file into the editor
+ *   { type: "REQUEST_MIDI" }                            – requests the current song as MIDI
+ *   { type: "PING" }                                    – health check
+ *   { type: "OPEN_FILE_RESPONSE", data: number[],       – parent's response to REQUEST_FILE_OPEN;
+ *          name: string }                                  handled directly in file.ts
  *
  * Outgoing messages (to parent):
  *   { type: "SAVE_MIDI", data: number[], name: string }
  *   { type: "MIDI_RESPONSE", data: number[], name: string }
  *   { type: "PONG" }
  *   { type: "SIGNAL_READY" }
+ *   { type: "REQUEST_FILE_OPEN" }                       – asks parent to open a .mid file picker
+ *                                                          so the dialog shows "musicwave.ai"
+ *                                                          instead of the Vercel deployment URL
  */
 export const PostMessageBridge: FC = () => {
   const setSong = useSetSong()

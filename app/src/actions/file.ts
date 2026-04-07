@@ -12,10 +12,57 @@ export const hasFSAccess =
   ("chooseFileSystemEntries" in window || "showOpenFilePicker" in window) &&
   !disableFileSystem
 
+/** True when this page is running inside an iframe (e.g. embedded in MusicWave) */
+const isInIframe = typeof window !== "undefined" && window.parent !== window
+
+/**
+ * When embedded in the MusicWave parent app we delegate file-open to the
+ * parent window so the browser's file-picker dialog shows "musicwave.ai"
+ * instead of the raw Vercel deployment URL.
+ *
+ * Protocol:
+ *   → { type: "REQUEST_FILE_OPEN" }           (iframe → parent)
+ *   ← { type: "OPEN_FILE_RESPONSE",           (parent → iframe)
+ *        data: number[], name: string }
+ */
+const openFileViaParent = (setSong: ReturnType<typeof useSetSong>) =>
+  new Promise<void>((resolve) => {
+    const handleResponse = (event: MessageEvent) => {
+      const msg = event.data
+      if (!msg || msg.type !== "OPEN_FILE_RESPONSE") return
+
+      window.removeEventListener("message", handleResponse)
+
+      try {
+        const bytes = new Uint8Array(msg.data as number[])
+        const song = songFromArrayBuffer(
+          bytes.buffer as ArrayBuffer,
+          undefined,
+          (msg.name as string) || "Untitled",
+        )
+        setSong(song)
+      } catch (err) {
+        console.error("[openFileViaParent] Failed to parse MIDI:", err)
+      }
+
+      resolve()
+    }
+
+    window.addEventListener("message", handleResponse)
+    window.parent.postMessage({ type: "REQUEST_FILE_OPEN" }, "*")
+  })
+
 export const useOpenFile = () => {
   const setSong = useSetSong()
 
   return async () => {
+    // When embedded in an iframe, ask the parent to show the file picker so
+    // the browser dialog reads "musicwave.ai" rather than the Vercel URL.
+    if (isInIframe) {
+      await openFileViaParent(setSong)
+      return
+    }
+
     let fileHandle: FileSystemFileHandle
     try {
       fileHandle = (

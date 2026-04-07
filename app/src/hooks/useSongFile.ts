@@ -6,6 +6,9 @@ import { useLocalization } from "../localize/useLocalization"
 import { useAutoSave } from "./useAutoSave"
 import { useSong } from "./useSong"
 
+/** True when running inside an iframe (e.g. embedded in MusicWave dashboard) */
+const isInIframe = typeof window !== "undefined" && window.parent !== window
+
 export const useSongFile = () => {
   const { isSaved, getSong } = useSong()
   const toast = useToast()
@@ -35,13 +38,20 @@ export const useSongFile = () => {
       async (e: ChangeEvent<HTMLInputElement>) => {
         try {
           if (isSaved || confirm(localized["confirm-new"])) {
+            // When embedded, the modern openFile() path already delegates to
+            // the parent window — use it here too so the legacy <input> path
+            // never triggers a dialog attributed to the Vercel URL.
+            if (isInIframe) {
+              await openFile()
+              return
+            }
             await openSong(e.currentTarget)
           }
         } catch (e) {
           toast.error((e as Error).message)
         }
       },
-      [isSaved, localized, openSong, toast],
+      [isSaved, localized, openFile, openSong, toast],
     ),
     saveSong: useCallback(async () => {
       await saveFile(getSong())
