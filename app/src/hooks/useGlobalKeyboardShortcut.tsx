@@ -16,6 +16,9 @@ import { useRouter } from "./useRouter"
 import { useSong } from "./useSong"
 import { useSongFile } from "./useSongFile"
 
+/** True when running inside an iframe (e.g. embedded in MusicWave dashboard) */
+const isInIframe = typeof window !== "undefined" && window.parent !== window
+
 export const useGlobalKeyboardShortcut = () => {
   const { setOpenHelpDialog } = useRootView()
   const { setPath } = useRouter()
@@ -30,11 +33,18 @@ export const useGlobalKeyboardShortcut = () => {
     useSongFile()
   const localized = useLocalization()
 
+  // When embedded in an iframe, always delegate file-open to openSong()
+  // which routes through the parent window. Clicking the hidden file input
+  // directly would show the iframe's Vercel URL in the browser dialog.
   const openLegacy = useCallback(async () => {
+    if (isInIframe) {
+      await openSong()
+      return
+    }
     if (isSaved || confirm(localized["confirm-open"])) {
       document.getElementById(fileInputID)?.click()
     }
-  }, [isSaved, localized])
+  }, [isSaved, localized, openSong])
 
   const actions = useMemo(
     () => [

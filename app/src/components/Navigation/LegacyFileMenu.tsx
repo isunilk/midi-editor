@@ -5,6 +5,9 @@ import { MenuDivider, MenuItem } from "../ui/Menu"
 
 export const fileInputID = "OpenButtonInputFile"
 
+/** True when running inside an iframe (e.g. embedded in MusicWave dashboard) */
+const isInIframe = typeof window !== "undefined" && window.parent !== window
+
 export const FileInput: FC<
   React.PropsWithChildren<{
     onChange: (e: ChangeEvent<HTMLInputElement>) => void
@@ -25,7 +28,8 @@ export const FileInput: FC<
 )
 
 export const LegacyFileMenu: FC<{ close: () => void }> = ({ close }) => {
-  const { createNewSong, openSongLegacy, downloadSong } = useSongFile()
+  const { createNewSong, openSong, openSongLegacy, downloadSong } =
+    useSongFile()
 
   const onClickNew = async () => {
     close()
@@ -35,6 +39,13 @@ export const LegacyFileMenu: FC<{ close: () => void }> = ({ close }) => {
   const onClickOpen = async (e: ChangeEvent<HTMLInputElement>) => {
     close()
     await openSongLegacy(e)
+  }
+
+  // When embedded, delegate file-open to the parent so the browser dialog
+  // shows "musicwave.ai" instead of the Vercel deployment URL.
+  const onClickOpenViaParent = async () => {
+    close()
+    await openSong()
   }
 
   const onClickSave = async () => {
@@ -50,11 +61,20 @@ export const LegacyFileMenu: FC<{ close: () => void }> = ({ close }) => {
 
       <MenuDivider />
 
-      <FileInput onChange={onClickOpen} accept=".mid,audio/midi">
-        <MenuItem>
+      {/* When embedded in an iframe, use a plain click handler that delegates
+          to the parent window. The <label>+<input> pattern would trigger the
+          native file dialog attributed to the iframe's origin. */}
+      {isInIframe ? (
+        <MenuItem onClick={onClickOpenViaParent}>
           <Localized name="open-song" />
         </MenuItem>
-      </FileInput>
+      ) : (
+        <FileInput onChange={onClickOpen} accept=".mid,audio/midi">
+          <MenuItem>
+            <Localized name="open-song" />
+          </MenuItem>
+        </FileInput>
+      )}
 
       <MenuItem onClick={onClickSave}>
         <Localized name="save-song" />
