@@ -1,7 +1,7 @@
 import styled from "@emotion/styled"
 import { FC, PropsWithChildren, useCallback } from "react"
 import { useSetSong } from "../../actions"
-import { songFromFile } from "../../actions/file"
+import { iframeConfirm, songFromFile } from "../../actions/file"
 import { useSong } from "../../hooks/useSong"
 import { useLocalization } from "../../localize/useLocalization"
 
@@ -29,7 +29,7 @@ export const DropZone: FC<PropsWithChildren> = ({ children }) => {
       if (file.type !== "audio/midi" && file.type !== "audio/mid") {
         return
       }
-      if (isSaved || confirm(localized["confirm-open"])) {
+      if (isSaved || (await iframeConfirm(localized["confirm-open"]))) {
         const newSong = await songFromFile(file)
         setSong(newSong)
       }

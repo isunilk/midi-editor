@@ -1,4 +1,5 @@
 import { Song, songFromMidi, songToMidi } from "@signal-app/core"
+import { downloadBlob } from "../helpers/Downloader"
 import { basename } from "../helpers/path"
 import { writeFile } from "../services/fs-helper"
 import { useSetSong } from "./song"
@@ -14,6 +15,37 @@ export const hasFSAccess =
 
 /** True when this page is running inside an iframe (e.g. embedded in MusicWave) */
 const isInIframe = typeof window !== "undefined" && window.parent !== window
+
+/**
+ * When embedded in the MusicWave parent app we delegate window.confirm() to
+ * the parent window so the browser dialog shows "musicwave.ai" instead of
+ * the raw Vercel deployment URL.
+ *
+ * Protocol:
+ *   → { type: "REQUEST_CONFIRM", message: string }    (iframe → parent)
+ *   ← { type: "CONFIRM_RESPONSE", result: boolean }   (parent → iframe)
+ */
+export const confirmViaParent = (message: string): Promise<boolean> =>
+  new Promise((resolve) => {
+    const handleResponse = (event: MessageEvent) => {
+      const msg = event.data
+      if (!msg || msg.type !== "CONFIRM_RESPONSE") return
+      window.removeEventListener("message", handleResponse)
+      resolve(!!msg.result)
+    }
+    window.addEventListener("message", handleResponse)
+    window.parent.postMessage({ type: "REQUEST_CONFIRM", message }, "*")
+  })
+
+/**
+ * Wrapper around confirm() that delegates to parent when in iframe.
+ */
+export const iframeConfirm = async (message: string): Promise<boolean> => {
+  if (isInIframe) {
+    return confirmViaParent(message)
+  }
+  return confirm(message)
+}
 
 /**
  * When embedded in the MusicWave parent app we delegate file-open to the
@@ -122,6 +154,12 @@ export const songFromArrayBuffer = (
 }
 
 export const saveFile = async (song: Song) => {
+  // When embedded in iframe, use blob download to avoid showing vercel domain
+  if (isInIframe) {
+    saveViaBlobDownload(song)
+    return
+  }
+
   const fileHandle = song.fileHandle
   if (fileHandle === null) {
     await saveFileAs(song)
@@ -139,6 +177,12 @@ export const saveFile = async (song: Song) => {
 }
 
 export const saveFileAs = async (song: Song) => {
+  // When embedded in iframe, use blob download to avoid showing vercel domain
+  if (isInIframe) {
+    saveViaBlobDownload(song)
+    return
+  }
+
   let fileHandle
   try {
     fileHandle = await window.showSaveFilePicker({
@@ -170,4 +214,16 @@ export const saveFileAs = async (song: Song) => {
     alert(msg)
     return
   }
+}
+
+/** Download MIDI via blob link — no native file picker, so no domain shown */
+const saveViaBlobDownload = (song: Song) => {
+  const bytes = songToMidi(song)
+  const blob = new Blob([new Uint8Array(bytes)], {
+    type: "audio/midi",
+  })
+  const fileName =
+    (song.name || song.filepath || "untitled").replace(/\.mid$/i, "") + ".mid"
+  downloadBlob(blob, fileName)
+  song.isSaved = true
 }

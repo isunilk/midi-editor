@@ -1,7 +1,7 @@
 import { useToast } from "dialog-hooks"
 import { ChangeEvent, useCallback } from "react"
 import { useCreateSong, useOpenSong, useSaveSong } from "../actions"
-import { saveFile, saveFileAs, useOpenFile } from "../actions/file"
+import { iframeConfirm, saveFile, saveFileAs, useOpenFile } from "../actions/file"
 import { useLocalization } from "../localize/useLocalization"
 import { useAutoSave } from "./useAutoSave"
 import { useSong } from "./useSong"
@@ -21,13 +21,13 @@ export const useSongFile = () => {
 
   return {
     createNewSong: useCallback(async () => {
-      if (isSaved || confirm(localized["confirm-new"])) {
+      if (isSaved || (await iframeConfirm(localized["confirm-new"]))) {
         createSong()
       }
     }, [isSaved, localized, createSong]),
     openSong: useCallback(async () => {
       try {
-        if (isSaved || confirm(localized["confirm-open"])) {
+        if (isSaved || (await iframeConfirm(localized["confirm-open"]))) {
           await openFile()
         }
       } catch (e) {
@@ -37,7 +37,7 @@ export const useSongFile = () => {
     openSongLegacy: useCallback(
       async (e: ChangeEvent<HTMLInputElement>) => {
         try {
-          if (isSaved || confirm(localized["confirm-new"])) {
+          if (isSaved || (await iframeConfirm(localized["confirm-new"]))) {
             // When embedded, the modern openFile() path already delegates to
             // the parent window — use it here too so the legacy <input> path
             // never triggers a dialog attributed to the Vercel URL.
